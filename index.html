@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster - To-Do Web Application</title>
+    <link rel="stylesheet" href="app.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="app-title">
+                <i class="fas fa-tasks"></i>
+                To-Do List App
+            </h1>
+            <p class="app-subtitle">Stay Organized, Stay Productive</p>
+        </header>
+
+        <main class="main-content">
+            <section class="add-task-section">
+                <div class="add-task-container">
+                    <h2>Add New Task</h2>
+                    <form id="taskForm" class="task-form">
+                        <div class="form-group">
+                            <label for="taskTitle">Task Title</label>
+                            <input 
+                                type="text" 
+                                id="taskTitle" 
+                                class="task-input" 
+                                placeholder="Enter task title..." 
+                                required
+                                maxlength="100"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="taskDateTime">Due Date & Time</label>
+                            <input 
+                                type="datetime-local" 
+                                id="taskDateTime" 
+                                class="datetime-input"
+                            >
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Add Task
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="filter-section">
+                <div class="filter-controls">
+                    <button class="filter-btn active" data-filter="all">
+                        <i class="fas fa-list"></i>
+                        All Tasks
+                    </button>
+                    <button class="filter-btn" data-filter="pending">
+                        <i class="fas fa-clock"></i>
+                        Pending
+                    </button>
+                    <button class="filter-btn" data-filter="completed">
+                        <i class="fas fa-check-circle"></i>
+                        Completed
+                    </button>
+                </div>
+                <div class="sort-controls">
+                    <label for="sortSelect" class="sort-label">
+                        <i class="fas fa-sort"></i>
+                        Sort By:
+                    </label>
+                    <select id="sortSelect" class="sort-select">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="due-date">Due Date</option>
+                        <option value="title">Title A-Z</option>
+                    </select>
+                </div>
+            </section>
+
+            <section class="tasks-section">
+                <div id="tasksContainer" class="tasks-container">
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No tasks yet</h3>
+                        <p>Add your first task to get started!</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <div class="task-stats">
+                <span class="stat-item">
+                    <i class="fas fa-tasks"></i>
+                    Total: <span id="totalTasks">0</span>
+                </span>
+                <span class="stat-item">
+                    <i class="fas fa-clock"></i>
+                    Pending: <span id="pendingTasks">0</span>
+                </span>
+                <span class="stat-item">
+                    <i class="fas fa-check-circle"></i>
+                    Completed: <span id="completedTasks">0</span>
+                </span>
+            </div>
+        </footer>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Task</h3>
+                <button aria-label="delete task">
+                    <i class="fas fa-trash-alt" id="deleteTask"></i>
+                </button>
+                <button type="button" class="close-btn" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editForm" class="edit-form">
+                <div class="form-group">
+                    <label for="editTaskTitle">Task Title</label>
+                    <input 
+                        type="text" 
+                        id="editTaskTitle" 
+                        class="task-input" 
+                        required
+                        maxlength="100"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="editTaskDateTime">Due Date & Time</label>
+                    <input 
+                        type="datetime-local" 
+                        id="editTaskDateTime" 
+                        class="datetime-input"
+                    >
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelEdit">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
