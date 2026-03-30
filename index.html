@@ -3,82 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskMaster - To-Do Web Application</title>
+    <title>TaskMaster</title>
     <link rel="stylesheet" href="app.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1 class="app-title">
-                <i class="fas fa-tasks"></i>
-                To-Do List App
-            </h1>
-            <p class="app-subtitle">Stay Organized, Stay Productive</p>
-        </header>
 
-        <main class="main-content">
-            <section class="add-task-section">
-                <div class="add-task-container">
-                    <h2>Add New Task</h2>
-                    <form id="taskForm" class="task-form">
-                        <div class="form-group">
-                            <label for="taskTitle">Task Title</label>
-                            <input 
-                                type="text" 
-                                id="taskTitle" 
-                                class="task-input" 
-                                placeholder="Enter task title..." 
-                                required
-                                maxlength="100"
-                            >
-                        </div>
-                        <div class="form-group">
-                            <label for="taskDateTime">Due Date & Time</label>
-                            <input 
-                                type="datetime-local" 
-                                id="taskDateTime" 
-                                class="datetime-input"
-                            >
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-plus"></i>
-                            Add Task
-                        </button>
-                    </form>
-                </div>
-            </section>
+    <div class="app-shell">
 
-            <section class="filter-section">
-                <div class="filter-controls">
-                    <button class="filter-btn active" data-filter="all">
-                        <i class="fas fa-list"></i>
-                        All Tasks
-                    </button>
-                    <button class="filter-btn" data-filter="pending">
-                        <i class="fas fa-clock"></i>
-                        Pending
-                    </button>
-                    <button class="filter-btn" data-filter="completed">
-                        <i class="fas fa-check-circle"></i>
-                        Completed
-                    </button>
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-icon"><i class="fas fa-check-double"></i></span>
+                <span class="brand-name">TaskMaster</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="filter-btn active" data-filter="all">
+                    <i class="fas fa-layer-group"></i> All Tasks
+                    <span class="count-badge" id="navTotal">0</span>
+                </button>
+                <button class="filter-btn" data-filter="pending">
+                    <i class="fas fa-hourglass-half"></i> Pending
+                    <span class="count-badge" id="navPending">0</span>
+                </button>
+                <button class="filter-btn" data-filter="completed">
+                    <i class="fas fa-check-circle"></i> Completed
+                    <span class="count-badge" id="navCompleted">0</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p class="tagline">Stay sharp,<br><em>stay ahead.</em></p>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+
+            <header class="top-bar">
+                <div>
+                    <h1 class="page-title">My Tasks</h1>
+                    <p class="page-date" id="currentDate"></p>
                 </div>
-                <div class="sort-controls">
-                    <label for="sortSelect" class="sort-label">
-                        <i class="fas fa-sort"></i>
-                        Sort By:
-                    </label>
-                    <select id="sortSelect" class="sort-select">
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
+                <div class="sort-wrap">
+                    <i class="fas fa-arrow-down-wide-short"></i>
+                    <select id="sortSelect" class="sort-select" aria-label="sort-select">
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
                         <option value="due-date">Due Date</option>
-                        <option value="title">Title A-Z</option>
+                        <option value="title">A–Z</option>
                     </select>
                 </div>
+            </header>
+
+            <!-- Add Task -->
+            <section class="add-panel">
+                <form id="taskForm" class="task-form">
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="taskTitle">Task</label>
+                            <input type="text" id="taskTitle" class="task-input" placeholder="What needs to be done?" required maxlength="100">
+                        </div>
+                        <div class="field field--narrow">
+                            <label for="taskDateTime">Due</label>
+                            <input type="datetime-local" id="taskDateTime" class="datetime-input">
+                        </div>
+                        <button type="submit" class="btn-add">
+                            <i class="fas fa-plus"></i>
+                            <span>Add</span>
+                        </button>
+                    </div>
+                </form>
             </section>
 
+            <!-- Task List -->
             <section class="tasks-section">
                 <div id="tasksContainer" class="tasks-container">
                     <div class="empty-state">
@@ -88,68 +88,65 @@
                     </div>
                 </div>
             </section>
-        </main>
 
-        <footer class="footer">
-            <div class="task-stats">
-                <span class="stat-item">
-                    <i class="fas fa-tasks"></i>
-                    Total: <span id="totalTasks">0</span>
-                </span>
-                <span class="stat-item">
-                    <i class="fas fa-clock"></i>
-                    Pending: <span id="pendingTasks">0</span>
-                </span>
-                <span class="stat-item">
-                    <i class="fas fa-check-circle"></i>
-                    Completed: <span id="completedTasks">0</span>
-                </span>
-            </div>
-        </footer>
+            <!-- Stats bar -->
+            <footer class="stats-bar">
+                <div class="stat">
+                    <span class="stat-num" id="totalTasks">0</span>
+                    <span class="stat-label">Total</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-num pending" id="pendingTasks">0</span>
+                    <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-num done" id="completedTasks">0</span>
+                    <span class="stat-label">Done</span>
+                </div>
+            </footer>
+
+        </main>
     </div>
 
+    <!-- Edit Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Edit Task</h3>
-                <button aria-label="delete task">
-                    <i class="fas fa-trash-alt" id="deleteTask"></i>
-                </button>
-                <button type="button" class="close-btn" aria-label="closeModal">
-                    <i class="fas fa-times"></i>
-                </button>
+                <h3><i class="fas fa-pen-to-square"></i> Edit Task</h3>
+                <div class="modal-header-actions">
+                    <button type="button" id="deleteTask" class="modal-delete-btn" title="Delete task" aria-label="Delete task">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <button type="button" class="close-btn" aria-label="Close modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
             <form id="editForm" class="edit-form">
-                <div class="form-group">
+                <div class="field">
                     <label for="editTaskTitle">Task Title</label>
-                    <input 
-                        type="text" 
-                        id="editTaskTitle" 
-                        class="task-input" 
-                        required
-                        maxlength="100"
-                    >
+                    <input type="text" id="editTaskTitle" class="task-input" required maxlength="100">
                 </div>
-                <div class="form-group">
-                    <label for="editTaskDateTime">Due Date & Time</label>
-                    <input 
-                        type="datetime-local" 
-                        id="editTaskDateTime" 
-                        class="datetime-input"
-                    >
+                <div class="field">
+                    <label for="editTaskDateTime">Due Date &amp; Time</label>
+                    <input type="datetime-local" id="editTaskDateTime" class="datetime-input">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="cancelEdit">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        Save Changes
-                    </button>
+                    <button type="button" class="btn btn-ghost" id="cancelEdit">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Set today's date in header
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+            weekday: 'long', month: 'long', day: 'numeric'
+        });
+    </script>
 </body>
 </html>

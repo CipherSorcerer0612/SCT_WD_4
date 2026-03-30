@@ -4,7 +4,7 @@ class TaskManager {
         this.currentFilter = 'all';
         this.currentSort = 'newest';
         this.editingTaskId = null;
-        
+
         this.init();
     }
 
@@ -28,7 +28,7 @@ class TaskManager {
 
     loadTasks() {
         try {
-            const stored = localStorage.getItem('tasks');
+            const stored = localStorage.getItem('taskmaster_tasks');
             this.tasks = stored ? JSON.parse(stored) : [];
         } catch (error) {
             console.error('Error loading tasks:', error);
@@ -38,18 +38,14 @@ class TaskManager {
 
     saveTasks() {
         try {
-            localStorage.setItem('tasks', JSON.stringify(this.tasks));
+            localStorage.setItem('taskmaster_tasks', JSON.stringify(this.tasks));
         } catch (error) {
             console.error('Error saving tasks:', error);
-            alert('Error saving tasks. Please check your browser storage.');
         }
     }
 
     addTask(title, dateTime) {
-        if (!title || title.trim() === '') {
-            alert('Please enter a task title');
-            return false;
-        }
+        if (!title || title.trim() === '') return false;
 
         const task = {
             id: this.generateId(),
@@ -68,12 +64,13 @@ class TaskManager {
     }
 
     deleteTask(id) {
-        if (confirm('Are you sure you want to delete this task?')) {
-            this.tasks = this.tasks.filter(task => task.id !== id);
-            this.saveTasks();
-            this.renderTasks();
-            this.updateStats();
-        }
+        if (!confirm('Delete this task?')) return;
+        this.tasks = this.tasks.filter(t => t.id !== id);
+        this.saveTasks();
+        this.renderTasks();
+        this.updateStats();
+        // close modal if open
+        this.closeEditModal();
     }
 
     toggleTask(id) {
@@ -120,9 +117,9 @@ class TaskManager {
         let filtered = [...this.tasks];
 
         if (this.currentFilter === 'completed') {
-            filtered = filtered.filter(task => task.completed);
+            filtered = filtered.filter(t => t.completed);
         } else if (this.currentFilter === 'pending') {
-            filtered = filtered.filter(task => !task.completed);
+            filtered = filtered.filter(t => !t.completed);
         }
 
         switch (this.currentSort) {
@@ -156,73 +153,26 @@ class TaskManager {
 
     isUpcoming(task) {
         if (!task.dateTime || task.completed) return false;
-        const dueDate = new Date(task.dateTime);
-        const now = new Date();
-        const timeDiff = dueDate.getTime() - now.getTime();
-        const hoursDiff = timeDiff / (1000 * 3600);
-        return hoursDiff <= 24 && hoursDiff > 0;
+        const diff = new Date(task.dateTime) - new Date();
+        return diff > 0 && diff <= 86400000;
     }
 
     formatDateTime(dateTimeString) {
         if (!dateTimeString) return 'No due date';
-        
         const date = new Date(dateTimeString);
         const now = new Date();
-        const diffTime = date - now;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const diffDays = Math.ceil((date - now) / 86400000);
 
-        const formatted = date.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-        if (diffDays === 0) return `Today, ${formatted.split(', ')[1]}`;
-        if (diffDays === 1) return `Tomorrow, ${formatted.split(', ')[1]}`;
-        if (diffDays === -1) return `Yesterday, ${formatted.split(', ')[1]}`;
-        if (diffDays > 1) return `In ${diffDays} days, ${formatted.split(', ')[1]}`;
-        
-        return formatted;
-    }
+        if (diffDays === 0) return `Today · ${timeStr}`;
+        if (diffDays === 1) return `Tomorrow · ${timeStr}`;
+        if (diffDays === -1) return `Yesterday · ${timeStr}`;
+        if (diffDays > 1 && diffDays <= 7) return `In ${diffDays} days · ${timeStr}`;
+        if (diffDays < -1) return `${Math.abs(diffDays)} days ago · ${timeStr}`;
 
-    createTaskHTML(task) {
-        const isOverdue = this.isOverdue(task);
-        const isUpcoming = this.isUpcoming(task);
-        const dateTimeClass = isOverdue ? 'overdue' : isUpcoming ? 'upcoming' : '';
-
-        return `
-            <div class="task-card ${task.completed ? 'completed' : ''} ${dateTimeClass}" data-id="${task.id}">
-                <div class="task-status ${task.completed ? 'completed' : 'pending'}"></div>
-                <div class="task-header">
-                    <div>
-                        <div class="task-title">${this.escapeHtml(task.title)}</div>
-                        <div class="task-meta">
-                            <div class="task-date ${dateTimeClass}">
-                                <i class="fas fa-calendar-alt"></i>
-                                ${this.formatDateTime(task.dateTime)}
-                                ${isOverdue ? '<i class="fas fa-exclamation-triangle"></i>' : ''}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="task-actions">
-                    <button class="btn btn-sm ${task.completed ? 'btn-secondary' : 'btn-success'}" onclick="taskManager.toggleTask('${task.id}')">
-                        <i class="fas ${task.completed ? 'fa-undo' : 'fa-check'}"></i>
-                        ${task.completed ? 'Undo' : 'Complete'}
-                    </button>
-                    <button class="btn btn-sm btn-secondary" onclick="taskManager.openEditModal('${task.id}')">
-                        <i class="fas fa-edit"></i>
-                        Edit
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="taskManager.deleteTask('${task.id}')">
-                        <i class="fas fa-trash"></i>
-                        Delete
-                    </button>
-                </div>
-            </div>
-        `;
+        return `${dateStr} · ${timeStr}`;
     }
 
     escapeHtml(text) {
@@ -231,31 +181,61 @@ class TaskManager {
         return div.innerHTML;
     }
 
+    createTaskHTML(task) {
+        const isOverdue = this.isOverdue(task);
+        const isUpcoming = this.isUpcoming(task);
+        const statusClass = task.completed ? 'completed' : isOverdue ? 'overdue' : isUpcoming ? 'upcoming' : 'pending';
+        const badge = task.completed ? 'Done' : isOverdue ? 'Overdue' : isUpcoming ? 'Soon' : 'Pending';
+
+        return `
+        <div class="task-card ${statusClass}" data-id="${task.id}">
+            <div class="task-badge ${statusClass}">${badge}</div>
+            <div class="task-body">
+                <p class="task-title">${this.escapeHtml(task.title)}</p>
+                <span class="task-date ${isOverdue ? 'overdue' : isUpcoming ? 'upcoming' : ''}">
+                    <i class="fas fa-calendar-alt"></i>
+                    ${this.formatDateTime(task.dateTime)}
+                    ${isOverdue ? '<i class="fas fa-exclamation-circle"></i>' : ''}
+                </span>
+            </div>
+            <div class="task-actions">
+                <button class="btn-icon ${task.completed ? 'undo' : 'complete'}" title="${task.completed ? 'Undo' : 'Complete'}"
+                    onclick="taskManager.toggleTask('${task.id}')">
+                    <i class="fas ${task.completed ? 'fa-undo' : 'fa-check'}"></i>
+                </button>
+                <button class="btn-icon edit" title="Edit"
+                    onclick="taskManager.openEditModal('${task.id}')">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <button class="btn-icon delete" title="Delete"
+                    onclick="taskManager.deleteTask('${task.id}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>`;
+    }
+
     renderTasks() {
         const container = document.getElementById('tasksContainer');
-        const filteredTasks = this.getFilteredTasks();
+        const filtered = this.getFilteredTasks();
 
-        if (filteredTasks.length === 0) {
+        if (filtered.length === 0) {
             container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-clipboard-list"></i>
-                    <h3>${this.currentFilter === 'all' ? 'No tasks yet' : `No ${this.currentFilter} tasks`}</h3>
-                    <p>${this.currentFilter === 'all' ? 'Add your first task to get started!' : `Try changing the filter or add some tasks.`}</p>
-                </div>
-            `;
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>${this.currentFilter === 'all' ? 'No tasks yet' : `No ${this.currentFilter} tasks`}</h3>
+                <p>${this.currentFilter === 'all' ? 'Add your first task above!' : 'Try changing the filter.'}</p>
+            </div>`;
             return;
         }
 
-        container.innerHTML = filteredTasks
-            .map(task => this.createTaskHTML(task))
-            .join('');
+        container.innerHTML = filtered.map(t => this.createTaskHTML(t)).join('');
     }
 
     updateStats() {
         const total = this.tasks.length;
-        const completed = this.tasks.filter(task => task.completed).length;
+        const completed = this.tasks.filter(t => t.completed).length;
         const pending = total - completed;
-
         document.getElementById('totalTasks').textContent = total;
         document.getElementById('pendingTasks').textContent = pending;
         document.getElementById('completedTasks').textContent = completed;
@@ -263,11 +243,9 @@ class TaskManager {
 
     setFilter(filter) {
         this.currentFilter = filter;
-        
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.filter === filter);
         });
-        
         this.renderTasks();
     }
 
@@ -277,55 +255,62 @@ class TaskManager {
     }
 
     bindEvents() {
-        document.getElementById('taskForm').addEventListener('submit', (e) => {
+        // Add task form
+        document.getElementById('taskForm').addEventListener('submit', e => {
             e.preventDefault();
             const title = document.getElementById('taskTitle').value;
             const dateTime = document.getElementById('taskDateTime').value;
-            
             if (this.addTask(title, dateTime)) {
                 e.target.reset();
                 this.setDefaultDateTime();
             }
         });
 
+        // Filters
         document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.setFilter(btn.dataset.filter);
-            });
+            btn.addEventListener('click', () => this.setFilter(btn.dataset.filter));
         });
 
-        document.getElementById('sortSelect').addEventListener('change', (e) => {
+        // Sort
+        document.getElementById('sortSelect').addEventListener('change', e => {
             this.setSort(e.target.value);
         });
 
-        document.getElementById('editForm').addEventListener('submit', (e) => {
+        // Edit form submit
+        document.getElementById('editForm').addEventListener('submit', e => {
             e.preventDefault();
             const title = document.getElementById('editTaskTitle').value;
             const dateTime = document.getElementById('editTaskDateTime').value;
-            
             if (this.editTask(this.editingTaskId, title, dateTime)) {
                 this.closeEditModal();
             }
         });
 
-        document.getElementById('closeModal').addEventListener('click', () => {
+        // ✅ FIX: close button uses class selector, not missing id
+        document.querySelector('#editModal .close-btn').addEventListener('click', () => {
             this.closeEditModal();
         });
 
+        // Cancel button
         document.getElementById('cancelEdit').addEventListener('click', () => {
             this.closeEditModal();
         });
 
-        document.getElementById('editModal').addEventListener('click', (e) => {
-            if (e.target.id === 'editModal') {
-                this.closeEditModal();
+        // ✅ FIX: delete button inside modal wired up
+        document.getElementById('deleteTask').addEventListener('click', () => {
+            if (this.editingTaskId) {
+                this.deleteTask(this.editingTaskId);
             }
         });
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeEditModal();
-            }
+        // Backdrop click
+        document.getElementById('editModal').addEventListener('click', e => {
+            if (e.target.id === 'editModal') this.closeEditModal();
+        });
+
+        // Escape key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') this.closeEditModal();
         });
     }
 }
